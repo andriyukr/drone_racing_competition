@@ -1,2 +1,3 @@
-# drone_racing_competition
+# Drone Racing Competition
+
 Drone Racing Competition
