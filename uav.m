@@ -2,7 +2,7 @@ function pose = uav(command)
 
 %% Parameters
 
-global dt;
+global dt initial_state;
 
 %% Initialize gains
 
@@ -14,13 +14,6 @@ Kd_pitch = 5;
 
 Kp_yaw = 30;
 Kd_yaw = 5;
-
-%% Initial state
-
-x_init = 0;
-y_init = 0;
-z_init = 0.1;
-yaw_init = 0;
 
 %% Initialize constants
 
@@ -39,11 +32,7 @@ g = 9.81;   % Gravitational acceleration
 persistent state;
 
 if isempty(state)
-    state = zeros(1, 12);
-    state(1) = x_init;
-    state(2) = y_init;
-    state(3) = z_init;
-    state(9) = yaw_init;
+    state = initial_state;
 end
 
 %% Position controller

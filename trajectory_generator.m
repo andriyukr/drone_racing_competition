@@ -1,6 +1,6 @@
 function [pose_d, velocity_d] = trajectory_generator(dt)
 
-global desired_speed;
+global desired_speed initial_state;
 
 %% Read gates' poses
 
@@ -11,7 +11,7 @@ numGates = size(gates, 1);
 
 %% Calculate waypoints
 
-waypoints(1,:) = [0 0 0 0];
+waypoints(1,:) = initial_state([1:3,9]);
 waypoints(2,:) = [0 0 1 atan2(gates(1,2), gates(1,1))];
 for i=0:50
     currentGate = rem(i, numGates) + 1;

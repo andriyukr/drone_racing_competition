@@ -4,7 +4,7 @@ clc
 clear all
 close all
 
-global dt desired_speed enable_animation;
+global dt initial_state desired_speed enable_animation;
 
 %% Changeable parameters (can be adjusted by participants)
 
@@ -18,9 +18,12 @@ simulation_time = 60; % [s]
 dt = 0.001;
 kend = simulation_time/dt;
 
+initial_state = [0 0 0.1 0 0 0 0 0 pi 0 0 0];
+
 %% Prealocate variables
 
 odom = zeros(kend, 12);
+odom(1,:) = initial_state;
 
 t = dt*(1:kend)';
 
@@ -45,17 +48,6 @@ for k = 1:kend
     odom(k + 1,:) = uav(command);
     
 end
-
-% figure(1)
-% hold on
-% grid on
-% % plot(0:kend, 180/pi*command(:,1), 'r:');
-% % plot(0:kend, 180/pi*command(:,2), 'g:');
-% plot(0:kend, 180/pi*pose_d(1:kend+1,4), 'b:');
-% % plot(0:kend, 180/pi*odom(:,7), 'r-');
-% % plot(0:kend, 180/pi*odom(:,8), 'g-');
-% plot(0:kend, 180/pi*odom(:,9), 'b-');
-% hold off
 
 %% Show animation
 
