@@ -19,7 +19,7 @@ Kd_y = 2;
 Kp_z = 50;
 Kd_z = 10;
 
-% Actual state
+%% Actual state
 
 x = pose(1);
 y = pose(2);
@@ -61,7 +61,7 @@ e_dz = dz_ref - vz;
 %% Position controller
 
 roll_ref = Kp_y*e_y + Kd_y*e_dy; %
-pitch_ref = Kp_x*e_x + Kd_x*e_dx; %
+pitch_ref = -Kp_x*e_x - Kd_x*e_dx; %
 thrust = 1*(9.81 + Kp_z*e_z + Kd_z*e_dz);   % total thrust on the body along z-axis
 
 roll_ref = max([min([roll_ref pi/2]) -pi/2]); %

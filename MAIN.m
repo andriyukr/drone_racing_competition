@@ -8,7 +8,7 @@ global dt desired_speed enable_animation;
 
 %% Changeable parameters (can be adjusted by participants)
 
-desired_speed = 3; % desired speed over the trajectory [in m/s]
+desired_speed = 1; % desired speed over the trajectory [in m/s]
 enable_animation = true; % enable/disable animation (animation slows down the simulation)
 
 simulation_time = 60; % [s]
@@ -36,33 +36,30 @@ for k = 1:kend
     %% UAV controller
     tic;
     
-    command(k + 1,:) = CONTROLLER(odom(k,[1:3,7:9]), pose_d(k,:), velocity_d(k,:));
+    command = CONTROLLER(odom(k,[1:3,7:9]), pose_d(k,:), velocity_d(k,:));
     
     elapsed = elapsed + toc;
     
     %% UAV model
     
-    odom(k + 1,:) = uav(command(k + 1,:));
+    odom(k + 1,:) = uav(command);
     
 end
 
-% figure(2)
+% figure(1)
 % hold on
 % grid on
-% plot(1:kend+1, 180/pi*command(:,1), 'r:');
-% plot(1:kend+1, 180/pi*command(:,2), 'g:');
-% plot(1:kend+1, 180/pi*command(:,3), 'b:');
-% plot(1:kend+1, 180/pi*odom(:,7), 'r-');
-% plot(1:kend+1, 180/pi*odom(:,8), 'g-');
-% plot(1:kend+1, 180/pi*odom(:,9), 'b-');
-% plot(1:kend+1, 10*odom(:,4), 'r--');
-% plot(1:kend+1, 10*odom(:,5), 'g--');
-% plot(1:kend+1, 10*odom(:,1), 'm-');
-% plot(1:kend+1, 10*odom(:,2), 'c-');
+% % plot(0:kend, 180/pi*command(:,1), 'r:');
+% % plot(0:kend, 180/pi*command(:,2), 'g:');
+% plot(0:kend, 180/pi*pose_d(1:kend+1,4), 'b:');
+% % plot(0:kend, 180/pi*odom(:,7), 'r-');
+% % plot(0:kend, 180/pi*odom(:,8), 'g-');
+% plot(0:kend, 180/pi*odom(:,9), 'b-');
+% hold off
 
 %% Show animation
 
-score = environment(odom, pose_d);
+score = environment(odom(:,[1:3,7:9]), pose_d);
 
 %% Show results
 

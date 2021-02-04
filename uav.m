@@ -19,7 +19,7 @@ Kd_yaw = 5;
 
 x_init = 0;
 y_init = 0;
-z_init = 0;
+z_init = 0.1;
 yaw_init = 0;
 
 %% Initialize constants
@@ -49,7 +49,7 @@ end
 %% Position controller
 
 roll_ref = command(1);
-pitch_ref = command(2);
+pitch_ref = -command(2);
 yaw_ref = command(3);
 thrust = command(4);
 
@@ -59,13 +59,23 @@ thrust = max([min([thrust 10*g]) 0]); %
 
 %% Compute attitude errors
 
+% denormalise yaw
+yaw = state(9);
+if(abs(yaw_ref - yaw) > pi)
+    if(yaw_ref < yaw)
+        yaw = yaw - 2*pi;
+    else
+        yaw = yaw + 2*pi;
+    end
+end
+
 e_roll = roll_ref - state(7);
 e_droll = -state(10);
 
 e_pitch = pitch_ref - state(8);
 e_dpitch = -state(11);
 
-e_yaw = yaw_ref - state(9);
+e_yaw = yaw_ref - yaw;
 e_dyaw = -state(12);
 
 %% Attitude controller
@@ -106,7 +116,12 @@ dstate(12) = ((Ixx - Iyy)/Izz)*state(10)*state(11) + (input(4)/Izz);
 
 state = state + dt*dstate;
 
-% pose = [state(1:3) state(9)];
-pose = state;
+% pose = [state(1:3) state(9)]; % x, y, z, yaw
+pose = state; % full state
+
+%% Noisy localisation
+
 speed = sqrt(sum(state(4:6).^2));
-% pose(1:3) = pose(1:3) + randn(1,3)/1000*speed;
+rate = sqrt(sum(state(10:12).^2));
+pose(1:3) = pose(1:3) + randn(1,3)/1000*speed; % add white noise to position
+pose(7:9) = pose(7:9) + randn(1,3)/1000*rate; % add white noise to attitude

@@ -11,6 +11,7 @@ tailLength = 1000; % [ms]
 %% Flags
 
 flagApproaching = true;
+flagLost = false;
 
 %% Read gates' poses
 
@@ -68,7 +69,7 @@ end
 
 %% Show 3D environment
 
-figure(1);
+figure(10);
 hold on;
 grid on;
 
@@ -101,7 +102,7 @@ end
 
 %% Show desired trajectory
 
-plot3(pose_d(:,1), pose_d(:,2), pose_d(:,3), 'k:');
+plot3(pose_d(:,1), pose_d(:,2), pose_d(:,3), 'k--');
 
 drawnow;
 
@@ -146,14 +147,24 @@ for k = 100:100:size(pose(:,1), 1)
     %% Score performance
 
     for i = 1:numGates
-        inside = tsearchn(gate(i).external, gate(i).triangulizationExternal, pose(max(1, k - tailLength + 1):k,1:3));
+        inside = tsearchn(gate(i).external, gate(i).triangulizationExternal, pose(k - 99:k,1:3));
+        if any(abs(pose(k - 99:k,1)) > 9) || any(abs(pose(k - 99:k,2)) > 9) || any(pose(k - 99:k,3) < 0) || any(pose(k - 99:k,3) > 4) % crashed on the wall, floor or ceiling
+            disp('Crashed!!!');
+            
+            c = flipud(autumn(k)); % vector of colors
+            scatter3(pose(1:k,1), pose(1:k,2), pose(1:k,3), 10, c(:,:), 'filled');
+            scatter3(pose(k,1), pose(k,2), pose(k,3), 100, c(end,:), 'filled');
+            annotation('textbox', [0.1, 0.9, 0.2, 0.05], 'String', strcat("Timer: ", num2str(fix(k/1000)), ".", num2str(rem(k, 1000)/100), " s"));
+            annotation('textbox', [0.7, 0.9, 0.2, 0.05], 'String', strcat("Score: ", num2str(score)));
+            return;
+        end
 
         if sum(~isnan(inside)) > 0
             if flagApproaching && i ~= lastGate
                 disp(['Approaching gate ', num2str(i), '.']);
                 flagApproaching = false;
             end
-            crossed = tsearchn(gate(i).internal, gate(i).triangulizationInternal, pose(max(1, k - tailLength + 1):k,1:3));
+            crossed = tsearchn(gate(i).internal, gate(i).triangulizationInternal, pose(k - 99:k,1:3));
             
             if sum(~isnan(crossed)) > 0
                 if i ~= lastGate
@@ -167,10 +178,11 @@ for k = 100:100:size(pose(:,1), 1)
                     flagApproaching = true;
                     disp(['Aiming gate ', num2str(nextGate), '.']);
                 end
-            else
-                disp(['Crashed!!!', ' (', num2str(i), ')']);
+            else % crashed on the gate
+                disp('Crashed!!!');
                 
-                scatter3(pose(max(1, k - tailLength + 1):k,1), pose(max(1, k - tailLength + 1):k,2), pose(max(1, k - tailLength + 1):k,3), 10, c(end - (k - max(1, k - tailLength + 1)):end,:), 'filled');
+                c = flipud(autumn(k)); % vector of colors
+                scatter3(pose(1:k,1), pose(1:k,2), pose(1:k,3), 10, c(:,:), 'filled');
                 scatter3(pose(k,1), pose(k,2), pose(k,3), 100, c(end,:), 'filled');
                 annotation('textbox', [0.1, 0.9, 0.2, 0.05], 'String', strcat("Timer: ", num2str(fix(k/1000)), ".", num2str(rem(k, 1000)/100), " s"));
                 annotation('textbox', [0.7, 0.9, 0.2, 0.05], 'String', strcat("Score: ", num2str(score)));
@@ -178,9 +190,28 @@ for k = 100:100:size(pose(:,1), 1)
             end
         end
     end
+    heading = atan2(gates(nextGate,2) - pose(k,2), gates(nextGate,1) - pose(k,1));
+    heading = heading - 2*pi*fix((heading - pose(k,6) + pi*sign(heading - pose(k,6)))/(2*pi));
+    if any(heading > pose(k - 99:k,6) + 70/180*pi | heading < pose(k - 99:k,6) - 70/180*pi) % gate not in the field of view
+        disp('Gate lost!');
+        score = score - sum(heading > pose(k - 99:k,6) + 70/180*pi | heading < pose(k - 99:k,6) - 70/180*pi)/1000;   
+    end
     
     if enable_animation
         hTrajectory = scatter3(pose(max(1, k - tailLength + 1):k,1), pose(max(1, k - tailLength + 1):k,2), pose(max(1, k - tailLength + 1):k,3), 10, c(end - (k - max(1, k - tailLength + 1)):end,:), 'filled');
+        cameraFOV = 10; % 10 -> 90deg, 20 -> 126deg, 30 -> 142deg
+        heading1 = eul2rotm(pose(k,4:6), 'XYZ')*[10; cameraFOV; cameraFOV];
+        heading2 = eul2rotm(pose(k,4:6), 'XYZ')*[10; cameraFOV; -cameraFOV];
+        heading3 = eul2rotm(pose(k,4:6), 'XYZ')*[10; -cameraFOV; -cameraFOV];
+        heading4 = eul2rotm(pose(k,4:6), 'XYZ')*[10; -cameraFOV; cameraFOV];
+        hCamera11 = fill3([pose(k,1) pose(k,1) + heading1(1) pose(k,1) + heading2(1)], [pose(k,2) pose(k,2) + heading1(2) pose(k,2) + heading2(2)], [pose(k,3) pose(k,3) + heading1(3) pose(k,3) + heading2(3)], [0.9 0.9 1]);
+        hCamera12 = fill3([pose(k,1) pose(k,1) + heading2(1) pose(k,1) + heading3(1)], [pose(k,2) pose(k,2) + heading2(2) pose(k,2) + heading3(2)], [pose(k,3) pose(k,3) + heading2(3) pose(k,3) + heading3(3)], [0.9 0.9 1]);
+        hCamera13 = fill3([pose(k,1) pose(k,1) + heading3(1) pose(k,1) + heading4(1)], [pose(k,2) pose(k,2) + heading3(2) pose(k,2) + heading4(2)], [pose(k,3) pose(k,3) + heading3(3) pose(k,3) + heading4(3)], [0.9 0.9 1]);
+        hCamera14 = fill3([pose(k,1) pose(k,1) + heading4(1) pose(k,1) + heading1(1)], [pose(k,2) pose(k,2) + heading4(2) pose(k,2) + heading1(2)], [pose(k,3) pose(k,3) + heading4(3) pose(k,3) + heading1(3)], [0.9 0.9 1]);
+        hCamera1 = plot3([pose(k,1), pose(k,1) + heading1(1)], [pose(k,2), pose(k,2) + heading1(2)], [pose(k,3), pose(k,3) + heading1(3)], 'b:');
+        hCamera2 = plot3([pose(k,1), pose(k,1) + heading2(1)], [pose(k,2), pose(k,2) + heading2(2)], [pose(k,3), pose(k,3) + heading2(3)], 'b:');
+        hCamera3 = plot3([pose(k,1), pose(k,1) + heading3(1)], [pose(k,2), pose(k,2) + heading3(2)], [pose(k,3), pose(k,3) + heading3(3)], 'b:');
+        hCamera4 = plot3([pose(k,1), pose(k,1) + heading4(1)], [pose(k,2), pose(k,2) + heading4(2)], [pose(k,3), pose(k,3) + heading4(3)], 'b:');
         hPoint = scatter3(pose(k,1), pose(k,2), pose(k,3), 100, c(end,:), 'filled');
         hTimer = annotation('textbox', [0.1, 0.9, 0.2, 0.05], 'String', strcat("Timer: ", num2str(fix(k/1000)), ".", num2str(rem(k, 1000)/100), " s"));
         hScore = annotation('textbox', [0.7, 0.9, 0.2, 0.05], 'String', strcat("Score: ", num2str(score)));
@@ -188,6 +219,14 @@ for k = 100:100:size(pose(:,1), 1)
         drawnow;
         
         delete(hTrajectory);
+        delete(hCamera11);
+        delete(hCamera12);
+        delete(hCamera13);
+        delete(hCamera14);
+        delete(hCamera1);
+        delete(hCamera2);
+        delete(hCamera3);
+        delete(hCamera4);
         delete(hScore);
         delete(hTimer);
         delete(hPoint);
