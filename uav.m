@@ -1,3 +1,28 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% uav: dynamical model of UAV and the low-level controller
+%
+% Syntax: pose = uav(command)
+%
+% Inputs:
+%    - command: control command ([roll* pitch* yaw* thrust*]) to UAV
+%
+% Outputs:
+%    - pose: actual pose ([x y z roll pitch yaw]) of UAV
+%
+% Example: 
+%    pose = uav(command);
+%
+% m-files required: none
+% mat-files required: none
+% other files required: none
+%
+% Author: Andriy Sarabakha
+% email: andriyukr@gmail.com
+% Website: http://www.sarabkha.info
+% Last revision: 08/02/2021
+% Environment: MATLAB R2020b
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function pose = uav(command)
 
 %% Parameters
@@ -20,11 +45,7 @@ Kd_yaw = 5;
 Ixx = 8.1*10^(-3);  % Quadrotor moment of inertia around X axis
 Iyy = 8.1*10^(-3);  % Quadrotor moment of inertia around Y axis
 Izz = 14.2*10^(-3);  % Quadrotor moment of inertia around Z axis
-Jtp = 104*10^(-6);  % Total rotational moment of inertia around the propeller axis
-b = 54.2*10^(-5);  % Thrust factor
-d = 1.1*10^(-6);  % Drag factor
-l = 0.2;  % Distance to the center of the Quadrotor
-m = 1;  % Mass of the Quadrotor in Kg
+m = 1.1;  % Mass of the Quadrotor in Kg
 g = 9.81;   % Gravitational acceleration
 
 %% Initialize state
@@ -49,7 +70,7 @@ thrust = max([min([thrust 10*g]) 0]); %
 %% Compute attitude errors
 
 % denormalise yaw
-yaw = state(9);
+yaw = state(6);
 if(abs(yaw_ref - yaw) > pi)
     if(yaw_ref < yaw)
         yaw = yaw - 2*pi;
@@ -58,10 +79,10 @@ if(abs(yaw_ref - yaw) > pi)
     end
 end
 
-e_roll = roll_ref - state(7);
+e_roll = roll_ref - state(4);
 e_droll = -state(10);
 
-e_pitch = pitch_ref - state(8);
+e_pitch = pitch_ref - state(5);
 e_dpitch = -state(11);
 
 e_yaw = yaw_ref - yaw;
@@ -77,40 +98,26 @@ input = [thrust tau_roll tau_pitch tau_yaw];
 
 %% System dynamics
 
-% dstate(1) = state(4);                                                                                   % x_dot
-% dstate(2) = state(5);                                                                                   % y_dot
-% dstate(3) = state(6);                                                                                   % z_dot
-% dstate(4) = (sin(state(9))*sin(state(7)) + cos(state(9))*sin(state(8))*cos(state(7)))*(input(1)/m);     % x_dotdot
-% dstate(5) = (-cos(state(9))*sin(state(7)) + sin(state(9))*sin(state(8))*cos(state(7)))*(input(1)/m);    % y_dotdot
-% dstate(6) = (cos(state(8))*cos(state(7)))*(input(1)/m) - g;                                             % z_dotdot
-% dstate(7) = state(10);                                                                                  % roll_dot
-% dstate(8) = state(11);                                                                                  % pitch_dot
-% dstate(9) = state(12);                                                                                  % yaw_dot
-% dstate(10) = ((Iyy - Izz)/Ixx)*state(11)*state(12) - (Jtp/Ixx)*state(11) + (input(2)/Ixx);              % roll_dotdot
-% dstate(11) = ((Izz - Ixx)/Iyy)*state(10)*state(12) + (Jtp/Iyy)*state(10) + (input(3)/Iyy);              % pitch_dotdot
-% dstate(12) = ((Ixx - Iyy)/Izz)*state(10)*state(11) + (input(4)/Izz);                                    % yaw_dotdot
-
-dstate(1) = state(4);                                                                                                 % x_dot
-dstate(2) = state(5);                                                                                                 % y_dot
-dstate(3) = state(6);                                                                                                 % z_dot
-dstate(4) = (cos(state(7))*cos(state(9))*sin(state(8)) + sin(state(7))*sin(state(9)))*(input(1)/m);         % x_dotdot
-dstate(5) = (-cos(state(7))*sin(state(8))*sin(state(9)) + cos(state(9))*sin(state(7)))*(input(1)/m);        % y_dotdot
-dstate(6) = (cos(state(8))*cos(state(7)))*(input(1)/m) - g;                                                       % z_dotdot
-dstate(7) = state(10) + sin(state(7))*tan(state(8))*state(11) + cos(state(7))*tan(state(8))*state(12);    % roll_dot
-dstate(8) = cos(state(7))*state(11) - sin(state(7))*state(12);                                                  % pitch_dot
-dstate(9) = sin(state(7))/cos(state(8))*state(11) + cos(state(7))/cos(state(8))*state(12);                  % yaw_dot
-dstate(10) = ((Iyy - Izz)/Ixx)*state(11)*state(12) + (input(2)/Ixx);                                              % roll_dotdot
-dstate(11) = ((Izz - Ixx)/Iyy)*state(10)*state(12) + (input(3)/Iyy);                                              % pitch_dotdot
-dstate(12) = ((Ixx - Iyy)/Izz)*state(10)*state(11) + (input(4)/Izz); 
+dstate(1) = state(7);                                                                                   % x_dot
+dstate(2) = state(8);                                                                                   % y_dot
+dstate(3) = state(9);                                                                                   % z_dot
+dstate(4) = state(10) + sin(state(4))*tan(state(5))*state(11) + cos(state(4))*tan(state(5))*state(12);  % roll_dot
+dstate(5) = cos(state(4))*state(11) - sin(state(4))*state(12);                                          % pitch_dot
+dstate(6) = sin(state(4))/cos(state(5))*state(11) + cos(state(4))/cos(state(5))*state(12);              % yaw_dot
+dstate(7) = (cos(state(4))*cos(state(6))*sin(state(5)) + sin(state(4))*sin(state(6)))*(input(1)/m);     % v_dot
+dstate(8) = (-cos(state(4))*sin(state(5))*sin(state(6)) + cos(state(6))*sin(state(4)))*(input(1)/m);    % u_dot
+dstate(9) = (cos(state(5))*cos(state(4)))*(input(1)/m) - g;                                             % w_dot
+dstate(10) = ((Iyy - Izz)/Ixx)*state(11)*state(12) + (input(2)/Ixx);                                    % p_dot
+dstate(11) = ((Izz - Ixx)/Iyy)*state(10)*state(12) + (input(3)/Iyy);                                    % q_dot
+dstate(12) = ((Ixx - Iyy)/Izz)*state(10)*state(11) + (input(4)/Izz);                                    % r_dot
 
 state = state + dt*dstate;
 
-% pose = [state(1:3) state(9)]; % x, y, z, yaw
-pose = state; % full state
-
 %% Noisy localisation
 
-speed = sqrt(sum(state(4:6).^2));
+pose = state(1:6); % x, y, z, roll, pitch, yaw
+
+speed = sqrt(sum(state(7:9).^2));
 rate = sqrt(sum(state(10:12).^2));
 pose(1:3) = pose(1:3) + randn(1,3)/1000*speed; % add white noise to position
-pose(7:9) = pose(7:9) + randn(1,3)/1000*rate; % add white noise to attitude
+pose(4:6) = pose(4:6) + randn(1,3)/1000*rate; % add white noise to attitude

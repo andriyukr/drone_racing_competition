@@ -1,8 +1,42 @@
-function score = environment(pose, pose_d)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% environment: visualisation of the racing arena and performance evaluation
+%
+% Syntax: score = environment(gates, pose, pose_d)
+%
+% Inputs:
+%    - gates: positions ([x y z]) and headings (yaw) of the gates
+%    - pose: actual pose ([x y z roll pitch yaw]) of UAV
+%    - pose_d: desired pose ([x* y* z* yaw*]) of UAV
+%
+% Outputs:
+%    - score: score accumulated during racing
+%
+% Results:
+%    - result.jpg: snapshot of the racing environment and the flown path
+%
+% Meta parameters:
+%    - enable_animation: flag to enable/disable animation (animation slows down the simulation) {true, false}
+%
+% Example: 
+%    score = environment(gates, pose, pose_d);
+%
+% m-files required: none
+% mat-files required:
+%    - gates (in /gates): contains meshes of the gates
+% other files required: none
+%
+% Author: Andriy Sarabakha
+% email: andriyukr@gmail.com
+% Website: http://www.sarabkha.info
+% Last revision: 08/02/2021
+% Environment: MATLAB R2020b
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-global enable_animation;
+function score = environment(gates, pose, pose_d)
 
 %% Parameters
+
+enable_animation = true; % flag to enable/disable animation (animation slows down the simulation) {true, false}
 
 sizeDrone = 0.1; % [m]
 
@@ -15,13 +49,11 @@ flagLost = false;
 
 %% Read gates' poses
 
-gates = load('gates/gates.txt');
-
 numGates = size(gates, 1);
 
 for i = 1:numGates
     gate(i).translation = gates(i,1:3);
-    gate(i).orientation = [0 0 gates(i,4)]/180*pi;
+    gate(i).orientation = [0 0 gates(i,4)];
 end
 
 %% Transform the data
@@ -56,10 +88,10 @@ for i = 1:numGates
     gate(i).legs.right.yOriginal = [0 0 0.5 -0.5];
     gate(i).legs.right.z = [gate(i).corners.front.z(2, 1) 0 0 0];
     
-    gate(i).legs.left.x = cos(gate(i).orientation(3)) * gate(i).legs.left.xOriginal - sin(gate(i).orientation(3)) * gate(i).legs.left.yOriginal;
-    gate(i).legs.left.y = sin(gate(i).orientation(3)) * gate(i).legs.left.xOriginal + cos(gate(i).orientation(3)) * gate(i).legs.left.yOriginal;
-    gate(i).legs.right.x = cos(gate(i).orientation(3)) * gate(i).legs.right.xOriginal - sin(gate(i).orientation(3)) * gate(i).legs.right.yOriginal;
-    gate(i).legs.right.y = sin(gate(i).orientation(3)) * gate(i).legs.right.xOriginal + cos(gate(i).orientation(3)) * gate(i).legs.right.yOriginal;
+    gate(i).legs.left.x = cos(gate(i).orientation(3))*gate(i).legs.left.xOriginal - sin(gate(i).orientation(3))*gate(i).legs.left.yOriginal;
+    gate(i).legs.left.y = sin(gate(i).orientation(3))*gate(i).legs.left.xOriginal + cos(gate(i).orientation(3))*gate(i).legs.left.yOriginal;
+    gate(i).legs.right.x = cos(gate(i).orientation(3))*gate(i).legs.right.xOriginal - sin(gate(i).orientation(3))*gate(i).legs.right.yOriginal;
+    gate(i).legs.right.y = sin(gate(i).orientation(3))*gate(i).legs.right.xOriginal + cos(gate(i).orientation(3))*gate(i).legs.right.yOriginal;
     
     gate(i).legs.left.x = gate(i).legs.left.x + gate(i).corners.front.x(1, 1);
     gate(i).legs.left.y = gate(i).legs.left.y + gate(i).corners.front.y(1, 1);
@@ -69,7 +101,7 @@ end
 
 %% Show 3D environment
 
-figure(10);
+figure;
 hold on;
 grid on;
 
@@ -109,7 +141,7 @@ drawnow;
 %% Generate external and internal regions of each gate
 
 [xExternal,yExternal,zExternal] = ...
-    meshgrid([-0.8 - sizeDrone 0.8 + sizeDrone], [-sizeDrone 0], [0.8 + sizeDrone -0.5 - sizeDrone]);
+    meshgrid([-0.8 - sizeDrone 0.8 + sizeDrone], [-sizeDrone 0], [0.8 + sizeDrone -0.8 - sizeDrone]);
 xExternal = [xExternal(:);0];
 yExternal = [yExternal(:);0];
 zExternal = [zExternal(:);0];
@@ -122,17 +154,27 @@ zInternal = [zInternal(:);0];
 
 for i = 1:numGates
     gate(i).external = [xExternal yExternal zExternal];
-    gate(i).external(:,1:2) = gate(i).external(:,1:2)*[cos(gates(i,4)) -sin(gates(i,4)); sin(gates(i,4)) cos(gates(i,4))]; % rotate the gate
-    gate(i).external = gate(i).external + gates(i,1:3); % translate the gate
+    gate(i).external(:,1:2) = gate(i).external(:,1:2)*[cos(gate(i).orientation(3)) -sin(gate(i).orientation(3)); sin(gate(i).orientation(3)) cos(gate(i).orientation(3))]'; % rotate the gate
+    gate(i).external = gate(i).external + gate(i).translation; % translate the gate
     
     gate(i).triangulizationExternal = delaunayn(gate(i).external); % Generate delaunay triangulization
     
     gate(i).internal = [xInternal yInternal zInternal];
-    gate(i).internal(:,1:2) = gate(i).internal(:,1:2)*[cos(gates(i,4)) -sin(gates(i,4)); sin(gates(i,4)) cos(gates(i,4))]; % rotate the gate
-    gate(i).internal = gate(i).internal + gates(i,1:3); % translate the gate
+    gate(i).internal(:,1:2) = gate(i).internal(:,1:2)*[cos(gate(i).orientation(3)) -sin(gate(i).orientation(3)); sin(gate(i).orientation(3)) cos(gate(i).orientation(3))]'; % rotate the gate
+    gate(i).internal = gate(i).internal + gate(i).translation; % translate the gate
  
     gate(i).triangulizationInternal = delaunayn(gate(i).internal); % generate delaunay triangulization
+    
+%     fill3(...
+%         [gate(i).external(1,1) gate(i).external(3,1) gate(i).external(7,1) gate(i).external(5,1)], ...
+%         [gate(i).external(1,2) gate(i).external(3,2) gate(i).external(7,2) gate(i).external(5,2)], ...
+%         [gate(i).external(1,3) gate(i).external(3,3) gate(i).external(7,3) gate(i).external(5,3)], [1 0 0]);
+%     fill3(...
+%         [gate(i).internal(1,1) gate(i).internal(3,1) gate(i).internal(7,1) gate(i).internal(5,1)], ...
+%         [gate(i).internal(1,2) gate(i).internal(3,2) gate(i).internal(7,2) gate(i).internal(5,2)], ...
+%         [gate(i).internal(1,3) gate(i).internal(3,3) gate(i).internal(7,3) gate(i).internal(5,3)], [0 1 0]);
 end
+
 
 %% Show actual trajectory
 
@@ -146,8 +188,7 @@ for k = 100:100:size(pose(:,1), 1)
     
     %% Score performance
 
-    for i = 1:numGates
-        inside = tsearchn(gate(i).external, gate(i).triangulizationExternal, pose(k - 99:k,1:3));
+    for i = 1:numGates       
         if any(abs(pose(k - 99:k,1)) > 9) || any(abs(pose(k - 99:k,2)) > 9) || any(pose(k - 99:k,3) < 0) || any(pose(k - 99:k,3) > 4) % crashed on the wall, floor or ceiling
             disp('Crashed!!!');
             
@@ -158,17 +199,18 @@ for k = 100:100:size(pose(:,1), 1)
             annotation('textbox', [0.7, 0.9, 0.2, 0.05], 'String', strcat("Score: ", num2str(score)));
             return;
         end
-
-        if sum(~isnan(inside)) > 0
+        
+        approaching = tsearchn(gate(i).external, gate(i).triangulizationExternal, pose(k - 99:k,1:3));
+        if any(~isnan(approaching))
             if flagApproaching && i ~= lastGate
                 disp(['Approaching gate ', num2str(i), '.']);
                 flagApproaching = false;
             end
-            crossed = tsearchn(gate(i).internal, gate(i).triangulizationInternal, pose(k - 99:k,1:3));
             
-            if sum(~isnan(crossed)) > 0
+            crossed = tsearchn(gate(i).internal, gate(i).triangulizationInternal, pose(k - 99:k,1:3));          
+            if ~any(~isnan(approaching) & isnan(crossed))
                 if i ~= lastGate
-                    disp(['Crossed gate ', num2str(i), '!']);
+                    disp(['Crossed gate ', num2str(i), '!!']);
                     score = score + 1;
                     if i ~= nextGate
                         score = score - 0.5;
@@ -193,8 +235,16 @@ for k = 100:100:size(pose(:,1), 1)
     heading = atan2(gates(nextGate,2) - pose(k,2), gates(nextGate,1) - pose(k,1));
     heading = heading - 2*pi*fix((heading - pose(k,6) + pi*sign(heading - pose(k,6)))/(2*pi));
     if any(heading > pose(k - 99:k,6) + 70/180*pi | heading < pose(k - 99:k,6) - 70/180*pi) % gate not in the field of view
-        disp('Gate lost!');
-        score = score - sum(heading > pose(k - 99:k,6) + 70/180*pi | heading < pose(k - 99:k,6) - 70/180*pi)/1000;   
+        if ~flagLost
+            disp('Gate lost!');
+            flagLost = true;
+        end
+        score = score - sum(heading > pose(k - 99:k,6) + 70/180*pi | heading < pose(k - 99:k,6) - 70/180*pi)/1000;
+    else
+        if flagLost
+            disp('Gate regained!');
+            flagLost = false;
+        end        
     end
     
     if enable_animation
