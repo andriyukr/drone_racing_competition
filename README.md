@@ -5,6 +5,10 @@
 ## Organizers
 - **Dr. Andriy Sarabakha** (Munich School of Robotics and Machine Intelligence, Technical University of Munich, Germany), andriy.sarabakha@tum.de
 - **Assoc. Prof. Erdal Kayacan** (Department of Engineering, Aarhus University, Denmark), erdal@ece.au.dk
+
+## Sponsors
+- [MathWorks](https://mathworks.com/)
+- [Luxembourg National Research Fund (FNR)](https://www.fnr.lu/)
 			
 ## Motivation
 Drone racing is a recreational sport in which the goal is to pass through a sequence of gates in a minimum amount of time while avoiding collisions with the environment. In autonomous drone racing, one must accomplish this task by flying fully autonomously in an unknown environment relying only on the on-board resources. Thus, autonomous drone racing is an exciting case study that aims to motivate more researchers to develop innovative ways of solving complex problems. What makes drone racing such an interesting challenge is the cumulative complexity of each sub-problem to be solved, such as _perception_, _localisation_, _path planning_ and _control_.
@@ -46,7 +50,9 @@ The controllers will be evaluated using a similar MATLAB environment but the pos
 The Organization Committee will evaluate the developed controllers on the testing racing track. The results will be announced during [FUZZ IEEE 2021](https://attend.ieee.org/fuzzieee-2021/) conference in July 2021.
             
 ## Prizes
-We may have some surprise prizes for the first, second and third teams.
+- A student MATLAB license for the **winning team**.
+- A small surprise from MathWorks for the **winning team**.
+- A webinar organised by MathWorks during the competition at FUZZ IEEE 2021 for **all participating teams**.
             
 ## Applications
 Prospective participants must submit an application via the [**following form**](https://forms.gle/LHfwawWpHx5MkVVGA). Successfully registered teams will receive a package containing the simulation environment. The latest version of the simulation environment can be downloaded also from this repository.
