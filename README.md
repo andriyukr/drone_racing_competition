@@ -4,7 +4,14 @@
 			
 ## Organizers
 - **Dr. Andriy Sarabakha** (Munich School of Robotics and Machine Intelligence, Technical University of Munich, Germany), andriy.sarabakha@tum.de
-- **Assoc. Prof. Erdal Kayacan** (Department of Engineering, Aarhus University, Denmark), erdal@ece.au.dk
+- **Prof. Erdal Kayacan** (Department of Engineering, Aarhus University, Denmark), erdal@ece.au.dk
+
+## Evaluation Committee
+- **Prof. ‪Jonathan M. Garibaldi**‬ (School of Computer Scince, University of Nottingham, UK)
+- **Prof. Oscar Castillo** (Division of Graduate Studies, Tijuana Institute of Technology, México)
+- **Dr. Hak-Keung Lam** (Department of Engineering, King's College London, UK)
+- **Prof. Erdal Kayacan** (Department of Electrical and Computer Engineering, Aarhus University, Denmark)
+- **Dr. Andriy Sarabakha** (Munich School of Robotics and Machine Intelligence, Technical University of Munich, Germany)
 
 ## Sponsors
 - [MathWorks](https://mathworks.com/)
