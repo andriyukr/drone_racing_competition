@@ -45,6 +45,10 @@ Please note that only the content of *controller.m* and *trajectory.m* can be mo
 *Figure 2. Racing arena simulated in Matlab.*
 
 The position and orientation of the gates in the testing arena will be different than in the arena provided to the teams to develop their controllers.
+
+## Execution
+
+Replace *controller.m* (and *trajectory.m*) inside *submissions/team1* with your implemented controller and trajectory generation, and run *MAIN.m*.
 			
 ## Marking
 The controllers will be evaluated using a similar MATLAB environment but the position of the gates will be different. The main prerequisite is the real-time implementation of the controller, in other words, **the controller must run minimum at 100Hz**. Each team will be given 60 seconds to cross as many gates as possible in a predefined sequence. The evaluation rules will be as follows:
