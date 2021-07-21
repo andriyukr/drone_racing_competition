@@ -27,25 +27,38 @@
 %
 % Author: Andriy Sarabakha
 % email: andriyukr@gmail.com
-% Website: http://www.sarabkha.info
+% Website: http://www.sarabakha.info
 % Last revision: 08/02/2021
 % Environment: MATLAB R2020b
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function score = environment(gates, pose, pose_d)
 
+global team round
+
 %% Parameters
 
 enable_animation = true; % flag to enable/disable animation (animation slows down the simulation) {true, false}
-
-sizeDrone = 0.1; % [m]
+save_video = false; % flag to the video with animation (can be activated only if animation is activated) {true, false}
 
 tailLength = 1000; % [ms]
+
+sizeDrone = 0.05; % radius [m]
+sizeEnvironment = [-10 10 -10 10 0 5]; % [m]
 
 %% Flags
 
 flagApproaching = true;
 flagLost = false;
+
+%% Initialise video writer
+
+if save_video
+    v = VideoWriter(['submissions/team', num2str(team), '/round', num2str(round), '.avi']);
+    v.Quality = 100;
+    v.FrameRate = 50; % 10 [fps]
+    open(v);
+end
 
 %% Read gates' poses
 
@@ -101,32 +114,61 @@ end
 
 %% Show 3D environment
 
-figure;
+figure('units', 'normalized', 'outerposition', [0 0 1 1]);
 hold on;
 grid on;
 
-% img_front = imread('gates/1x1_front.png');
-% img_back = imread('gates/1x1_back.png');
+mesh_gate_front = imread('gates/1x1_front.png');
+mesh_gate_back = imread('gates/1x1_back.png');
+mesh_fuzzieee = imread('gates/fuzzieee.png');
+mesh_tum = imread('gates/tum.png');
+mesh_au = imread('gates/au.png');
+mesh_mathworks = imread('gates/mathworks.png');
+mesh_fnr = imread('gates/fnr.png');
+save('gates/meshes', 'mesh_gate_front', 'mesh_gate_back', 'mesh_fuzzieee', 'mesh_tum', 'mesh_au', 'mesh_mathworks', 'mesh_fnr');
 
-load('gates/gates');
+load('gates/meshes');
 
 set(gca, 'fontsize', 15);
 axis equal;
-axis ([-9 9 -9 9 0 4]);
+axis (sizeEnvironment);
 xlabel('$x$ [m]', 'interpreter', 'latex', 'fontsize', 15);
 ylabel('$y$ [m]', 'interpreter', 'latex', 'fontsize', 15);
 zlabel('$z$ [m]', 'interpreter', 'latex', 'fontsize', 15);
 set(gca, 'TickLabelInterpreter', 'latex')
 view(-40, 40);
+% view(0, 90);
+
+%% Show sponsors
+
+s_front = surf([-1 3; -3 1], [3 -1; 1 -3], [0 0; 0 0], 'CData', mesh_fuzzieee, 'FaceColor', 'texturemap', 'EdgeColor', 'none');    % Plot the surface
+s_front.AlphaData = (mesh_fuzzieee(:,:,1)<255 | mesh_fuzzieee(:,:,2)<255 | mesh_fuzzieee(:,:,3)<255);
+s_front.FaceAlpha = 'texturemap';
+
+s_front = surf([6 10; 4 8], [10 6; 8 4], [0 0; 0 0], 'CData', mesh_au, 'FaceColor', 'texturemap', 'EdgeColor', 'none');    % Plot the surface
+s_front.AlphaData = (mesh_au(:,:,1)<255 | mesh_au(:,:,2)<255 | mesh_au(:,:,3)<255);
+s_front.FaceAlpha = 'texturemap';
+
+s_front = surf([10 6; 8 4], [-6 -10; -4 -8], [0 0; 0 0], 'CData', mesh_fnr, 'FaceColor', 'texturemap', 'EdgeColor', 'none');    % Plot the surface
+s_front.AlphaData = (mesh_fnr(:,:,1)<255 | mesh_fnr(:,:,2)<255 | mesh_fnr(:,:,3)<255);
+s_front.FaceAlpha = 'texturemap';
+
+s_front = surf([-8 -4; -10 -6], [-4 -8; -6 -10], [0 0; 0 0], 'CData', mesh_tum, 'FaceColor', 'texturemap', 'EdgeColor', 'none');    % Plot the surface
+s_front.AlphaData = (mesh_tum(:,:,1)<255 | mesh_tum(:,:,2)<255 | mesh_tum(:,:,3)<255);
+s_front.FaceAlpha = 'texturemap';
+
+s_front = surf([-10 -6; -8 -4], [6 10; 4 8], [0 0; 0 0], 'CData', mesh_mathworks, 'FaceColor', 'texturemap', 'EdgeColor', 'none');    % Plot the surface
+s_front.AlphaData = (mesh_mathworks(:,:,1)<255 | mesh_mathworks(:,:,2)<255 | mesh_mathworks(:,:,3)<255);
+s_front.FaceAlpha = 'texturemap';
 
 %% Show gates
 
 for i = 1:numGates
-    s_front = surf(gate(i).corners.front.x, gate(i).corners.front.y, gate(i).corners.front.z, 'CData', img_front, 'FaceColor', 'texturemap');    % Plot the surface
-    s_front.AlphaData = (img_front(:,:,1)<255 | img_front(:,:,2)>0);
+    s_front = surf(gate(i).corners.front.x, gate(i).corners.front.y, gate(i).corners.front.z, 'CData', mesh_gate_front, 'FaceColor', 'texturemap');    % Plot the surface
+    s_front.AlphaData = (mesh_gate_front(:,:,1)<255 | mesh_gate_front(:,:,2)>0);
     s_front.FaceAlpha = 'texturemap';
-    s_back = surf(gate(i).corners.back.x, gate(i).corners.back.y, gate(i).corners.back.z, 'CData', img_back, 'FaceColor', 'texturemap');    % Plot the surface
-    s_back.AlphaData = (img_back(:,:,1)<255 | img_back(:,:,2)>0);
+    s_back = surf(gate(i).corners.back.x, gate(i).corners.back.y, gate(i).corners.back.z, 'CData', mesh_gate_back, 'FaceColor', 'texturemap');    % Plot the surface
+    s_back.AlphaData = (mesh_gate_back(:,:,1)<255 | mesh_gate_back(:,:,2)>0);
     s_back.FaceAlpha = 'texturemap';
     plot3(gate(i).legs.left.x, gate(i).legs.left.y, gate(i).legs.left.z, 'color', [0.5, 0.5, 0.5], 'linewidth', 1);
     plot3(gate(i).legs.right.x, gate(i).legs.right.y, gate(i).legs.right.z, 'color', [0.5, 0.5, 0.5], 'linewidth', 1);
@@ -137,6 +179,9 @@ end
 plot3(pose_d(:,1), pose_d(:,2), pose_d(:,3), 'k--');
 
 drawnow;
+
+% score = 0;
+% return;
 
 %% Generate external and internal regions of each gate
 
@@ -180,7 +225,7 @@ end
 
 score = 0;
 nextGate = 1;
-lastGate = 0;
+lastGate = numGates;
 disp(['Aiming gate ', num2str(nextGate), '.']);
 
 c = flipud(autumn(tailLength)); % vector of colors
@@ -189,28 +234,28 @@ for k = 100:100:size(pose(:,1), 1)
     %% Score performance
 
     for i = 1:numGates       
-        if any(abs(pose(k - 99:k,1)) > 9) || any(abs(pose(k - 99:k,2)) > 9) || any(pose(k - 99:k,3) < 0) || any(pose(k - 99:k,3) > 4) % crashed on the wall, floor or ceiling
+        if any(abs(pose(k - 99:k,1)) > sizeEnvironment(2)) || any(abs(pose(k - 99:k,2)) > sizeEnvironment(4)) || any(pose(k - 99:k,3) < sizeEnvironment(5)) || any(pose(k - 99:k,3) > sizeEnvironment(6)) % crashed on the wall, floor or ceiling
             disp('Crashed!!!');
             
             c = flipud(autumn(k)); % vector of colors
             scatter3(pose(1:k,1), pose(1:k,2), pose(1:k,3), 10, c(:,:), 'filled');
             scatter3(pose(k,1), pose(k,2), pose(k,3), 100, c(end,:), 'filled');
-            annotation('textbox', [0.1, 0.9, 0.2, 0.05], 'String', strcat("Timer: ", num2str(fix(k/1000)), ".", num2str(rem(k, 1000)/100), " s"));
-            annotation('textbox', [0.7, 0.9, 0.2, 0.05], 'String', strcat("Score: ", num2str(score)));
+            annotation('textbox', [0.1, 0.9, 0.2, 0.05], 'String', strcat("Timer: ", num2str(fix(k/1000)), ".", num2str(rem(k, 1000)/100), " s"), 'FontSize', 20);
+            annotation('textbox', [0.7, 0.9, 0.2, 0.05], 'String', strcat("Score: ", num2str(score)), 'FontSize', 20);
             return;
         end
         
         approaching = tsearchn(gate(i).external, gate(i).triangulizationExternal, pose(k - 99:k,1:3));
         if any(~isnan(approaching))
-            if flagApproaching && i ~= lastGate
+            if flagApproaching && i ~= lastGate && ~all(gate(i).translation == gate(lastGate).translation)
                 disp(['Approaching gate ', num2str(i), '.']);
                 flagApproaching = false;
             end
             
             crossed = tsearchn(gate(i).internal, gate(i).triangulizationInternal, pose(k - 99:k,1:3));          
             if ~any(~isnan(approaching) & isnan(crossed))
-                if i ~= lastGate
-                    disp(['Crossed gate ', num2str(i), '!!']);
+                if i ~= lastGate && ~all(gate(i).translation == gate(lastGate).translation)
+                    disp(['Crossed gate ', num2str(i), '!']);
                     score = score + 1;
                     if i ~= nextGate
                         score = score - 0.5;
@@ -226,8 +271,8 @@ for k = 100:100:size(pose(:,1), 1)
                 c = flipud(autumn(k)); % vector of colors
                 scatter3(pose(1:k,1), pose(1:k,2), pose(1:k,3), 10, c(:,:), 'filled');
                 scatter3(pose(k,1), pose(k,2), pose(k,3), 100, c(end,:), 'filled');
-                annotation('textbox', [0.1, 0.9, 0.2, 0.05], 'String', strcat("Timer: ", num2str(fix(k/1000)), ".", num2str(rem(k, 1000)/100), " s"));
-                annotation('textbox', [0.7, 0.9, 0.2, 0.05], 'String', strcat("Score: ", num2str(score)));
+                annotation('textbox', [0.1, 0.9, 0.2, 0.05], 'String', strcat("Timer: ", num2str(fix(k/1000)), ".", num2str(rem(k, 1000)/100), " s"), 'FontSize', 20);
+                annotation('textbox', [0.7, 0.9, 0.2, 0.05], 'String', strcat("Score: ", num2str(score)), 'FontSize', 20);
                 return;
             end
         end
@@ -263,9 +308,14 @@ for k = 100:100:size(pose(:,1), 1)
         hCamera3 = plot3([pose(k,1), pose(k,1) + heading3(1)], [pose(k,2), pose(k,2) + heading3(2)], [pose(k,3), pose(k,3) + heading3(3)], 'b:');
         hCamera4 = plot3([pose(k,1), pose(k,1) + heading4(1)], [pose(k,2), pose(k,2) + heading4(2)], [pose(k,3), pose(k,3) + heading4(3)], 'b:');
         hPoint = scatter3(pose(k,1), pose(k,2), pose(k,3), 100, c(end,:), 'filled');
-        hTimer = annotation('textbox', [0.1, 0.9, 0.2, 0.05], 'String', strcat("Timer: ", num2str(fix(k/1000)), ".", num2str(rem(k, 1000)/100), " s"));
-        hScore = annotation('textbox', [0.7, 0.9, 0.2, 0.05], 'String', strcat("Score: ", num2str(score)));
-            
+        hTimer = annotation('textbox', [0.1, 0.9, 0.2, 0.05], 'String', strcat("Timer: ", num2str(fix(k/1000)), ".", num2str(rem(k, 1000)/100), " s"), 'FontSize', 20);
+        hScore = annotation('textbox', [0.7, 0.9, 0.2, 0.05], 'String', strcat("Score: ", num2str(score)), 'FontSize', 20);
+        
+        if save_video
+            frame = getframe(gcf);
+            writeVideo(v, frame);
+        end
+        
         drawnow;
         
         delete(hTrajectory);
@@ -288,7 +338,17 @@ score = score + 5;
 c = flipud(autumn(size(pose, 1))); % vector of colors
 scatter3(pose(:,1), pose(:,2), pose(:,3), 10, c(:,:), 'filled');
 scatter3(pose(k,1), pose(k,2), pose(k,3), 100, c(end,:), 'filled');
-annotation('textbox', [0.1, 0.9, 0.2, 0.05], 'String', strcat("Timer: ", num2str(fix(k/1000)), ".", num2str(rem(k, 1000)/100), " s"));
-annotation('textbox', [0.7, 0.9, 0.2, 0.05], 'String', strcat("Score: ", num2str(score)));
+annotation('textbox', [0.1, 0.9, 0.2, 0.05], 'String', strcat("Timer: ", num2str(fix(k/1000)), ".", num2str(rem(k, 1000)/100), " s"), 'FontSize', 20);
+annotation('textbox', [0.7, 0.9, 0.2, 0.05], 'String', strcat("Score: ", num2str(score)), 'FontSize', 20);
 
-print('result.jpg', '-djpeg', '-r600');
+if save_video
+    frame = getframe(gcf);
+    for i = 1:v.FrameRate
+        writeVideo(v, frame);
+    end
+end
+
+print(['submissions/team', num2str(team), '/round', num2str(round), '.jpg'], '-djpeg', '-r600');
+if save_video
+    close(v);
+end

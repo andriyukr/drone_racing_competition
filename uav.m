@@ -18,7 +18,7 @@
 %
 % Author: Andriy Sarabakha
 % email: andriyukr@gmail.com
-% Website: http://www.sarabkha.info
+% Website: http://www.sarabakha.info
 % Last revision: 08/02/2021
 % Environment: MATLAB R2020b
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -56,7 +56,7 @@ if isempty(state)
     state = initial_state;
 end
 
-%% Position controller
+%% Attitude controller
 
 roll_ref = command(1);
 pitch_ref = -command(2);
